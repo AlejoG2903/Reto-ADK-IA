@@ -593,70 +593,13 @@ docker-compose exec agente ls /app/workspace/
 
 ## 🗄️ Base de Datos
 
-### Schema Automático
+PostgreSQL se inicializa automáticamente con:
 
-```sql
--- Tabla de pacientes
-CREATE TABLE pacientes (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(255),
-    documento VARCHAR(50) UNIQUE,
-    fecha_nacimiento DATE,
-    telefono VARCHAR(20),
-    email VARCHAR(255)
-);
+- **6 tablas**: pacientes, diagnosticos, consultas, consulta_diagnosticos, medicamentos, consumos
+- **Datos de prueba pre-cargados** para testing
+- **Migrations automáticas** en `/infrastructure/db/migrations/`
 
--- Tabla de diagnósticos
-CREATE TABLE diagnosticos (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(255),
-    codigo VARCHAR(10) UNIQUE,
-    descripcion TEXT
-);
-
--- Tabla de consultas
-CREATE TABLE consultas (
-    id SERIAL PRIMARY KEY,
-    paciente_id INTEGER REFERENCES pacientes,
-    fecha_consulta DATE,
-    turno VARCHAR(20),
-    notas TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Relación consulta-diagnóstico
-CREATE TABLE consulta_diagnosticos (
-    id SERIAL PRIMARY KEY,
-    consulta_id INTEGER REFERENCES consultas,
-    diagnostico_id INTEGER REFERENCES diagnosticos,
-    es_principal BOOLEAN DEFAULT false
-);
-
--- Tabla de medicamentos
-CREATE TABLE medicamentos (
-    id SERIAL PRIMARY KEY,
-    nombre VARCHAR(255),
-    stock_actual INTEGER,
-    stock_minimo INTEGER,
-    precio DECIMAL(10,2)
-);
-
--- Tabla de consumos
-CREATE TABLE consumos (
-    id SERIAL PRIMARY KEY,
-    consulta_id INTEGER REFERENCES consultas,
-    medicamento_id INTEGER REFERENCES medicamentos,
-    cantidad INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Datos Pre-cargados
-
-- 3 pacientes de prueba con historia completa
-- 5 diagnósticos comunes (Gripe, COVID-19, Dengue, etc.)
-- 5 medicamentos básicos (Amoxicilina, Ibuprofeno, Paracetamol, etc.)
-- 8 consultas de ejemplo con diagnósticos y consumos
+**Las herramientas de los MCP servers manejan todo el acceso a datos** (no necesitas queries SQL manuales).
 
 ---
 
