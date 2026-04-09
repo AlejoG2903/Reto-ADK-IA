@@ -24,7 +24,15 @@ docker-compose up -d --build
 
 ---
 
-## 🧪 Ejecutar tests
+## 🧪 Tests
+
+### Instalar dependencias
+
+```bash
+pip install -r requirements.txt
+```
+
+### Ejecutar tests
 
 ```bash
 pytest tests/test_completo.py -v
@@ -123,5 +131,3 @@ El sistema está compuesto por:
 * ✔️ Caso de uso documentado
 * ✔️ Configuración con `.env.example`
 * ✔️ Docker completamente operativo
-
----
