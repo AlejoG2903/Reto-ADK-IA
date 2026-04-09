@@ -11,7 +11,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./infrastructure/db/migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "admin", "-d", "clinica"]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
       interval: 5s
       retries: 5
 
@@ -21,7 +21,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+     DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
     ports:
       - "8001:8001"
 
@@ -62,7 +62,7 @@ services:
       mcp_analitica:
         condition: service_started
     environment:
-      DATABASE_URL: "postgresql://admin:admin@postgres:5432/clinica"
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
       LLM_MODEL: ${LLM_MODEL}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
     ports:
