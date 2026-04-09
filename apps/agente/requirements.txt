@@ -1,0 +1,2 @@
+google-adk>=0.6.0
+httpx>=0.24.0

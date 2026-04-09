@@ -1,0 +1,62 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.log
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.pytest_cache/
+.coverage
+htmlcov/
+pgdata/
+workspace/*
+!workspace/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Virtual environments
+venv/
+env/
+.*env
+.venv
+
+# Credentials (NEVER commit)
+*.key
+*.pem
+secrets.json
+.env*
+!.env.example

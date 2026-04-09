@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infrastructure/db/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "admin", "-d", "clinica"]
+      interval: 5s
+      retries: 5
+
+  mcp_database:
+    build: ./apps/mcp_servers/mcp_database
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+    ports:
+      - "8001:8001"
+
+  mcp_filesystem:
+    build: ./apps/mcp_servers/mcp_filesystem
+    environment:
+      WORKSPACE_DIR: /workspace
+    volumes:
+      - ./workspace:/workspace
+    ports:
+      - "8002:8002"
+
+  mcp_api:
+    build: ./apps/mcp_servers/mcp_api
+    environment:
+      DISEASE_API_URL: "https://disease.sh/v3/covid-19"
+    ports:
+      - "8003:8003"
+
+  mcp_analitica:
+    build: ./apps/mcp_servers/mcp_analitica
+    environment:
+      CAPACIDAD_TURNO: ${CAPACIDAD_TURNO}
+    ports:
+      - "8004:8004"
+
+  agente:
+    build: ./apps/agente
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mcp_database:
+        condition: service_started
+      mcp_filesystem:
+        condition: service_started
+      mcp_api:
+        condition: service_started
+      mcp_analitica:
+        condition: service_started
+    environment:
+      DATABASE_URL: "postgresql://admin:admin@postgres:5432/clinica"
+      LLM_MODEL: ${LLM_MODEL}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+    ports:
+      - "8005:8005"
+    command: /bin/bash -c 'tail -f /dev/null'
+
+volumes:
+  pgdata:
