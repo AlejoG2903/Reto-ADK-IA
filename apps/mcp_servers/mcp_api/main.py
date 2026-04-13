@@ -4,32 +4,36 @@ import logging
 import httpx
 from fastmcp import FastMCP
 
-mcp = FastMCP("mcp-api")
-logger = logging.getLogger("mcp-api")
-BASE_URL = os.getenv("DISEASE_API_URL", "https://disease.sh/v3/covid-19")
+# Usamos un nombre simple sin guiones para evitar problemas de resolución
+mcp = FastMCP("epidemiologia")
+logger = logging.getLogger("mcp-epidemiologia")
 
-async def fetch(url: str) -> dict:
+BASE_URL = "https://www.datos.gov.co/resource/gt2j-8ykr.json"
+
+async def fetch(params: dict = None) -> dict:
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url)
+            response = await client.get(BASE_URL, params=params)
             response.raise_for_status()
-            return {"success": True, "data": response.json()}
+            data = response.json()
+            # Creamos un resumen para que el LLM lo procese fácil
+            resumen = f"Se encontraron {len(data)} registros epidemiológicos activos." if data else "No hay alertas activas."
+            return {"success": True, "resumen": resumen, "data": data}
     except Exception as e:
-        logger.error(json.dumps({"tool": "fetch", "error": str(e)}))
-        return {"success": False, "error": str(e), "data": None}
+        logger.error(f"Error en fetch: {str(e)}")
+        return {"success": False, "error": str(e), "resumen": "Error al consultar alertas."}
 
 @mcp.tool()
-async def obtener_alertas_globales() -> dict:
-    return await fetch(f"{BASE_URL}/all")
+async def alertas_bogota() -> dict:
+    """Obtiene datos epidemiológicos filtrados para Bogotá"""
+    params = {"ciudad_municipio_nom": "BOGOTA", "$limit": 10}
+    return await fetch(params)
 
 @mcp.tool()
-async def obtener_alertas_pais(pais: str) -> dict:
-    return await fetch(f"{BASE_URL}/countries/{pais}")
-
-@mcp.tool()
-async def obtener_historico_global() -> dict:
-    return await fetch(f"{BASE_URL}/historical/all?lastdays=7")
+async def alertas_colombia() -> dict:
+    """Datos generales de Colombia"""
+    params = {"$limit": 10}
+    return await fetch(params)
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(mcp.sse_app(), host="0.0.0.0", port=8003)
+    mcp.run(transport="sse")

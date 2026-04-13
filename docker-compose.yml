@@ -1,10 +1,12 @@
 services:
   postgres:
     image: postgres:15
+    container_name: mcp_postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - TZ=America/Bogota
     ports:
       - "5432:5432"
     volumes:
@@ -17,18 +19,24 @@ services:
 
   mcp_database:
     build: ./apps/mcp_servers/mcp_database
+    container_name: mcp_database
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-     DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - FASTMCP_HOST=0.0.0.0
+      - FASTMCP_PORT=8001
     ports:
       - "8001:8001"
 
   mcp_filesystem:
     build: ./apps/mcp_servers/mcp_filesystem
+    container_name: mcp_filesystem
     environment:
-      WORKSPACE_DIR: /workspace
+      - WORKSPACE_DIR=/workspace
+      - FASTMCP_HOST=0.0.0.0
+      - FASTMCP_PORT=8002
     volumes:
       - ./workspace:/workspace
     ports:
@@ -36,23 +44,27 @@ services:
 
   mcp_api:
     build: ./apps/mcp_servers/mcp_api
+    container_name: mcp_api
     environment:
-      DISEASE_API_URL: "https://disease.sh/v3/covid-19"
+      - FASTMCP_HOST=0.0.0.0
+      - FASTMCP_PORT=8003
     ports:
       - "8003:8003"
 
   mcp_analitica:
     build: ./apps/mcp_servers/mcp_analitica
+    container_name: mcp_analitica
     environment:
-      CAPACIDAD_TURNO: ${CAPACIDAD_TURNO}
+      - CAPACIDAD_TURNO=${CAPACIDAD_TURNO}
+      - FASTMCP_HOST=0.0.0.0
+      - FASTMCP_PORT=8004
     ports:
       - "8004:8004"
 
   agente:
     build: ./apps/agente
+    container_name: agente_clinica
     depends_on:
-      postgres:
-        condition: service_healthy
       mcp_database:
         condition: service_started
       mcp_filesystem:
@@ -62,12 +74,17 @@ services:
       mcp_analitica:
         condition: service_started
     environment:
-      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
-      LLM_MODEL: ${LLM_MODEL}
-      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - MCP_DATABASE_URL=http://mcp_database:8001
+      - MCP_FILESYSTEM_URL=http://mcp_filesystem:8002
+      - MCP_API_URL=http://mcp_api:8003
+      - MCP_ANALITICA_URL=http://mcp_analitica:8004
+      - TZ=America/Bogota
+    volumes:
+      - ./workspace:/workspace
     ports:
-      - "8005:8005"
-      - "8000:8000"
+      - "8000:8000"  # Interfaz Web del ADK
+      - "8005:8005"  # Puerto secundario / debug
     command: ["adk", "web", "--port", "8000", "--host", "0.0.0.0"]
 
 volumes:

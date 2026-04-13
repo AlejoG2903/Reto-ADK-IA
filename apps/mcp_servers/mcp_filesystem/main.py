@@ -64,5 +64,4 @@ async def existe_archivo(ruta: str) -> dict:
         return {"success": False, "error": str(e)}
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(mcp.sse_app(), host="0.0.0.0", port=8002)
+    mcp.run(transport="sse")
